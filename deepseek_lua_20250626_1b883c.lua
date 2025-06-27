@@ -1,6 +1,7 @@
 [START OUTPUT]
--- Fixed Rivals ESP v2.1 - Toggle Menu with 'T' Key
+-- Rivals ESP v3.0 - Working ESP with Menu Toggle
 -- Press T to open/close ESP control menu
+-- Designed for Xenon injection
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -20,36 +21,41 @@ local ESP = {
     Players = {}
 }
 
--- UI Setup
-local GUI = Instance.new("ScreenGui")
-GUI.Name = "RivalsESPToggle"
-GUI.Parent = game:GetService("CoreGui")  -- Fixed parent reference
-GUI.ResetOnSpawn = false
+-- Create GUI only if it doesn't exist
+if not game:GetService("CoreGui"):FindFirstChild("RivalsESPGui") then
+    local GUI = Instance.new("ScreenGui")
+    GUI.Name = "RivalsESPGui"
+    GUI.Parent = game:GetService("CoreGui")
+    GUI.ResetOnSpawn = false
 
-local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 250, 0, 300)
-MenuFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
-MenuFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MenuFrame.BorderSizePixel = 0
-MenuFrame.Visible = false
-MenuFrame.Active = true
-MenuFrame.Draggable = true
-MenuFrame.Parent = GUI
+    local MenuFrame = Instance.new("Frame")
+    MenuFrame.Name = "ESPMenu"
+    MenuFrame.Size = UDim2.new(0, 250, 0, 300)
+    MenuFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
+    MenuFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    MenuFrame.BorderSizePixel = 0
+    MenuFrame.Visible = false
+    MenuFrame.Active = true
+    MenuFrame.Draggable = true
+    MenuFrame.Parent = GUI
 
-local Title = Instance.new("TextLabel")
-Title.Text = "RIVALS ESP v2.1"
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.Font = Enum.Font.GothamBold
-Title.Parent = MenuFrame
+    local Title = Instance.new("TextLabel")
+    Title.Text = "RIVALS ESP v3.0"
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+    Title.TextColor3 = Color3.new(1, 1, 1)
+    Title.Font = Enum.Font.GothamBold
+    Title.Parent = MenuFrame
+end
 
--- FIXED: Toggle Menu with T Key
+-- Get references to GUI elements
+local GUI = game:GetService("CoreGui").RivalsESPGui
+local MenuFrame = GUI:FindFirstChild("ESPMenu")
+
+-- Toggle Menu with T Key
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    -- Only process if game hasn't handled it and it's a keyboard event
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.T then
+    if input.KeyCode == Enum.KeyCode.T and not gameProcessed then
         MenuFrame.Visible = not MenuFrame.Visible
-        print("Menu toggled: " .. (MenuFrame.Visible and "OPEN" or "CLOSED"))
     end
 end)
 
@@ -70,6 +76,7 @@ local function CreateESP(player)
     ESPData.Box.Filled = false
     ESPData.NameTag.Size = 18
     ESPData.NameTag.Center = true
+    ESPData.NameTag.Outline = true
     ESPData.HealthBar.Thickness = 3
     ESPData.Tracer.Thickness = 1
     
@@ -77,6 +84,10 @@ local function CreateESP(player)
 end
 
 local function UpdateESP()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
     for player, esp in pairs(ESP.Players) do
         if not player or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             for _, drawing in pairs(esp) do
@@ -118,7 +129,7 @@ local function UpdateESP()
         esp.Box.Visible = ESP.Enabled and ESP.Boxes
         
         -- Update name tag
-        esp.NameTag.Text = player.Name
+        esp.NameTag.Text = player.Name .. (ESP.ShowDistance and (" [" .. math.floor(distance) .. "m]") or "")
         esp.NameTag.Position = Vector2.new(rootPos.X, rootPos.Y - height/2 - 20)
         esp.NameTag.Color = teamColor
         esp.NameTag.Visible = ESP.Enabled
@@ -172,66 +183,70 @@ for _, player in ipairs(Players:GetPlayers()) do
     CreateESP(player)
 end
 
--- Create menu controls
-local yOffset = 40
-local function CreateToggle(text, configKey, yPos)
-    local toggle = Instance.new("TextButton")
-    toggle.Text = text
-    toggle.Size = UDim2.new(0.8, 0, 0, 30)
-    toggle.Position = UDim2.new(0.1, 0, 0, yPos)
-    toggle.BackgroundColor3 = ESP[configKey] and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(80, 0, 0)
-    toggle.TextColor3 = Color3.new(1, 1, 1)
-    toggle.Font = Enum.Font.Gotham
-    toggle.Parent = MenuFrame
-    
-    toggle.MouseButton1Click:Connect(function()
-        ESP[configKey] = not ESP[configKey]
+-- Create menu controls if they don't exist
+if not MenuFrame:FindFirstChild("ESPToggle") then
+    local yOffset = 40
+    local function CreateToggle(text, configKey, yPos)
+        local toggle = Instance.new("TextButton")
+        toggle.Name = "ESPToggle"
+        toggle.Text = text
+        toggle.Size = UDim2.new(0.8, 0, 0, 30)
+        toggle.Position = UDim2.new(0.1, 0, 0, yPos)
         toggle.BackgroundColor3 = ESP[configKey] and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(80, 0, 0)
+        toggle.TextColor3 = Color3.new(1, 1, 1)
+        toggle.Font = Enum.Font.Gotham
+        toggle.Parent = MenuFrame
+        
+        toggle.MouseButton1Click:Connect(function()
+            ESP[configKey] = not ESP[configKey]
+            toggle.BackgroundColor3 = ESP[configKey] and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(80, 0, 0)
+            toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
+        end)
+        
         toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
-    end)
-    
-    toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
-    return toggle
-end
-
-CreateToggle("ESP Master", "Enabled", yOffset)
-CreateToggle("Show Health", "ShowHealth", yOffset + 40)
-CreateToggle("Team Check", "TeamCheck", yOffset + 80)
-CreateToggle("Box ESP", "Boxes", yOffset + 120)
-CreateToggle("Tracers", "Tracers", yOffset + 160)
-
--- Distance slider
-local distanceSlider = Instance.new("TextLabel")
-distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
-distanceSlider.Size = UDim2.new(0.8, 0, 0, 20)
-distanceSlider.Position = UDim2.new(0.1, 0, 0, yOffset + 200)
-distanceSlider.TextColor3 = Color3.new(1, 1, 1)
-distanceSlider.BackgroundTransparency = 1
-distanceSlider.Font = Enum.Font.Gotham
-distanceSlider.Parent = MenuFrame
-
-local slider = Instance.new("TextBox")
-slider.Text = tostring(ESP.MaxDistance)
-slider.Size = UDim2.new(0.8, 0, 0, 30)
-slider.Position = UDim2.new(0.1, 0, 0, yOffset + 220)
-slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-slider.TextColor3 = Color3.new(1, 1, 1)
-slider.Font = Enum.Font.Gotham
-slider.Parent = MenuFrame
-
-slider.FocusLost:Connect(function()
-    local num = tonumber(slider.Text)
-    if num then
-        ESP.MaxDistance = math.clamp(num, 50, 2000)
-        slider.Text = tostring(ESP.MaxDistance)
-        distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
-    else
-        slider.Text = tostring(ESP.MaxDistance)
+        return toggle
     end
-end)
+
+    CreateToggle("ESP Master", "Enabled", yOffset)
+    CreateToggle("Show Health", "ShowHealth", yOffset + 40)
+    CreateToggle("Team Check", "TeamCheck", yOffset + 80)
+    CreateToggle("Box ESP", "Boxes", yOffset + 120)
+    CreateToggle("Tracers", "Tracers", yOffset + 160)
+    CreateToggle("Show Distance", "ShowDistance", yOffset + 200)
+
+    -- Distance slider
+    local distanceSlider = Instance.new("TextLabel")
+    distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
+    distanceSlider.Size = UDim2.new(0.8, 0, 0, 20)
+    distanceSlider.Position = UDim2.new(0.1, 0, 0, yOffset + 240)
+    distanceSlider.TextColor3 = Color3.new(1, 1, 1)
+    distanceSlider.BackgroundTransparency = 1
+    distanceSlider.Font = Enum.Font.Gotham
+    distanceSlider.Parent = MenuFrame
+
+    local slider = Instance.new("TextBox")
+    slider.Text = tostring(ESP.MaxDistance)
+    slider.Size = UDim2.new(0.8, 0, 0, 30)
+    slider.Position = UDim2.new(0.1, 0, 0, yOffset + 260)
+    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    slider.TextColor3 = Color3.new(1, 1, 1)
+    slider.Font = Enum.Font.Gotham
+    slider.Parent = MenuFrame
+
+    slider.FocusLost:Connect(function()
+        local num = tonumber(slider.Text)
+        if num then
+            ESP.MaxDistance = math.clamp(num, 50, 2000)
+            slider.Text = tostring(ESP.MaxDistance)
+            distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
+        else
+            slider.Text = tostring(ESP.MaxDistance)
+        end
+    end)
+end
 
 -- Main render loop
 RunService.RenderStepped:Connect(UpdateESP)
 
-print("Rivals ESP activated! Press T to toggle menu")
+print("[RIVALS ESP] Successfully loaded! Press T to toggle menu")
 [END OUTPUT]
