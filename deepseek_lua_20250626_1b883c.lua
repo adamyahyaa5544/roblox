@@ -1,6 +1,5 @@
-[START OUTPUT]
 -- Rivals ESP v3.0 - Working ESP with Menu Toggle
--- Press T to open/close ESP control menu
+-- Press RightShift to open/close ESP control menu
 -- Designed for Xenon injection
 
 local Players = game:GetService("Players")
@@ -52,9 +51,9 @@ end
 local GUI = game:GetService("CoreGui").RivalsESPGui
 local MenuFrame = GUI:FindFirstChild("ESPMenu")
 
--- Toggle Menu with T Key
+-- Toggle Menu with RightShift Key
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.T and not gameProcessed then
+    if input.KeyCode == Enum.KeyCode.RightShift and not gameProcessed then
         MenuFrame.Visible = not MenuFrame.Visible
     end
 end)
@@ -102,57 +101,47 @@ local function UpdateESP()
         
         if not rootPart or not head or not humanoid then goto continue end
         
-        -- Position calculations
         local rootPos, rootVis = Camera:WorldToViewportPoint(rootPart.Position)
         local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
         
         if not rootVis then goto continue end
         
-        -- Distance calculation
         local distance = (LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude
         if distance > ESP.MaxDistance then goto continue end
         
-        -- Box dimensions
         local height = (headPos.Y - rootPos.Y) * 1.5
         local width = height * 0.65
         
-        -- Team color check
         local teamColor = Color3.new(1, 0, 0)
         if ESP.TeamCheck and player.Team == LocalPlayer.Team then
             teamColor = Color3.new(0, 1, 0)
         end
         
-        -- Update box
         esp.Box.Size = Vector2.new(width, height)
         esp.Box.Position = Vector2.new(rootPos.X - width/2, rootPos.Y - height/2)
         esp.Box.Color = teamColor
         esp.Box.Visible = ESP.Enabled and ESP.Boxes
         
-        -- Update name tag
         esp.NameTag.Text = player.Name .. (ESP.ShowDistance and (" [" .. math.floor(distance) .. "m]") or "")
         esp.NameTag.Position = Vector2.new(rootPos.X, rootPos.Y - height/2 - 20)
         esp.NameTag.Color = teamColor
         esp.NameTag.Visible = ESP.Enabled
         
-        -- Update health
         if ESP.ShowHealth then
             local healthPercent = humanoid.Health / humanoid.MaxHealth
             local healthY = rootPos.Y + height/2 + 5
             
-            -- Health bar
             esp.HealthBar.From = Vector2.new(rootPos.X - width/2, healthY)
             esp.HealthBar.To = Vector2.new(rootPos.X - width/2 + width * healthPercent, healthY)
             esp.HealthBar.Color = Color3.new(1 - healthPercent, healthPercent, 0)
             esp.HealthBar.Visible = ESP.Enabled
             
-            -- Health text
             esp.HealthText.Text = math.floor(humanoid.Health) .. "HP"
             esp.HealthText.Position = Vector2.new(rootPos.X + width/2 + 10, healthY - 10)
             esp.HealthText.Color = Color3.new(1, 1, 1)
             esp.HealthText.Visible = ESP.Enabled
         end
         
-        -- Update tracer
         if ESP.Tracers then
             esp.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
             esp.Tracer.To = Vector2.new(rootPos.X, rootPos.Y)
@@ -164,7 +153,6 @@ local function UpdateESP()
     end
 end
 
--- Player management
 Players.PlayerAdded:Connect(function(player)
     CreateESP(player)
 end)
@@ -178,12 +166,10 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
--- Initialize for existing players
 for _, player in ipairs(Players:GetPlayers()) do
     CreateESP(player)
 end
 
--- Create menu controls if they don't exist
 if not MenuFrame:FindFirstChild("ESPToggle") then
     local yOffset = 40
     local function CreateToggle(text, configKey, yPos)
@@ -214,7 +200,6 @@ if not MenuFrame:FindFirstChild("ESPToggle") then
     CreateToggle("Tracers", "Tracers", yOffset + 160)
     CreateToggle("Show Distance", "ShowDistance", yOffset + 200)
 
-    -- Distance slider
     local distanceSlider = Instance.new("TextLabel")
     distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
     distanceSlider.Size = UDim2.new(0.8, 0, 0, 20)
@@ -245,8 +230,6 @@ if not MenuFrame:FindFirstChild("ESPToggle") then
     end)
 end
 
--- Main render loop
 RunService.RenderStepped:Connect(UpdateESP)
 
-print("[RIVALS ESP] Successfully loaded! Press T to toggle menu")
-[END OUTPUT]
+print("[RIVALS ESP] Successfully loaded! Press RightShift to toggle menu")
