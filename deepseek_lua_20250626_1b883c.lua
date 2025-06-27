@@ -1,5 +1,5 @@
 [START OUTPUT]
--- Rivals ESP v2.0 - Toggle Menu with 'T' Key
+-- Fixed Rivals ESP v2.1 - Toggle Menu with 'T' Key
 -- Press T to open/close ESP control menu
 
 local Players = game:GetService("Players")
@@ -23,7 +23,7 @@ local ESP = {
 -- UI Setup
 local GUI = Instance.new("ScreenGui")
 GUI.Name = "RivalsESPToggle"
-GUI.Parent = game.CoreGui
+GUI.Parent = game:GetService("CoreGui")  -- Fixed parent reference
 GUI.ResetOnSpawn = false
 
 local MenuFrame = Instance.new("Frame")
@@ -37,17 +37,19 @@ MenuFrame.Draggable = true
 MenuFrame.Parent = GUI
 
 local Title = Instance.new("TextLabel")
-Title.Text = "RIVALS ESP v2.0"
+Title.Text = "RIVALS ESP v2.1"
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.Font = Enum.Font.GothamBold
 Title.Parent = MenuFrame
 
--- Toggle Menu with T Key
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.T then
+-- FIXED: Toggle Menu with T Key
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    -- Only process if game hasn't handled it and it's a keyboard event
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.T then
         MenuFrame.Visible = not MenuFrame.Visible
+        print("Menu toggled: " .. (MenuFrame.Visible and "OPEN" or "CLOSED"))
     end
 end)
 
@@ -185,10 +187,10 @@ local function CreateToggle(text, configKey, yPos)
     toggle.MouseButton1Click:Connect(function()
         ESP[configKey] = not ESP[configKey]
         toggle.BackgroundColor3 = ESP[configKey] and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(80, 0, 0)
-        toggle.Text = text .. ": " .. (ESP[configKey] and "ON" : "OFF")
+        toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
     end)
     
-    toggle.Text = text .. ": " .. (ESP[configKey] and "ON" : "OFF")
+    toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
     return toggle
 end
 
