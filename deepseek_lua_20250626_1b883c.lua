@@ -1,7 +1,6 @@
 [START OUTPUT]
--- Rivals ESP v1.69 - Player Health/Name Display with Menu
--- Press RIGHT SHIFT to toggle menu
--- WARNING: This may violate Roblox ToS - Use at your own risk
+-- Rivals ESP v2.0 - Toggle Menu with 'T' Key
+-- Press T to open/close ESP control menu
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -23,8 +22,9 @@ local ESP = {
 
 -- UI Setup
 local GUI = Instance.new("ScreenGui")
-GUI.Name = "RivalsESP"
+GUI.Name = "RivalsESPToggle"
 GUI.Parent = game.CoreGui
+GUI.ResetOnSpawn = false
 
 local MenuFrame = Instance.new("Frame")
 MenuFrame.Size = UDim2.new(0, 250, 0, 300)
@@ -32,19 +32,21 @@ MenuFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MenuFrame.BorderSizePixel = 0
 MenuFrame.Visible = false
+MenuFrame.Active = true
+MenuFrame.Draggable = true
 MenuFrame.Parent = GUI
 
 local Title = Instance.new("TextLabel")
-Title.Text = "RIVALS ESP v1.69"
+Title.Text = "RIVALS ESP v2.0"
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.Font = Enum.Font.GothamBold
 Title.Parent = MenuFrame
 
--- Toggle Menu with Right Shift
+-- Toggle Menu with T Key
 UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightShift then
+    if input.KeyCode == Enum.KeyCode.T then
         MenuFrame.Visible = not MenuFrame.Visible
     end
 end)
@@ -183,10 +185,10 @@ local function CreateToggle(text, configKey, yPos)
     toggle.MouseButton1Click:Connect(function()
         ESP[configKey] = not ESP[configKey]
         toggle.BackgroundColor3 = ESP[configKey] and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(80, 0, 0)
-        toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
+        toggle.Text = text .. ": " .. (ESP[configKey] and "ON" : "OFF")
     end)
     
-    toggle.Text = text .. ": " .. (ESP[configKey] and "ON" or "OFF")
+    toggle.Text = text .. ": " .. (ESP[configKey] and "ON" : "OFF")
     return toggle
 end
 
@@ -196,8 +198,38 @@ CreateToggle("Team Check", "TeamCheck", yOffset + 80)
 CreateToggle("Box ESP", "Boxes", yOffset + 120)
 CreateToggle("Tracers", "Tracers", yOffset + 160)
 
+-- Distance slider
+local distanceSlider = Instance.new("TextLabel")
+distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
+distanceSlider.Size = UDim2.new(0.8, 0, 0, 20)
+distanceSlider.Position = UDim2.new(0.1, 0, 0, yOffset + 200)
+distanceSlider.TextColor3 = Color3.new(1, 1, 1)
+distanceSlider.BackgroundTransparency = 1
+distanceSlider.Font = Enum.Font.Gotham
+distanceSlider.Parent = MenuFrame
+
+local slider = Instance.new("TextBox")
+slider.Text = tostring(ESP.MaxDistance)
+slider.Size = UDim2.new(0.8, 0, 0, 30)
+slider.Position = UDim2.new(0.1, 0, 0, yOffset + 220)
+slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+slider.TextColor3 = Color3.new(1, 1, 1)
+slider.Font = Enum.Font.Gotham
+slider.Parent = MenuFrame
+
+slider.FocusLost:Connect(function()
+    local num = tonumber(slider.Text)
+    if num then
+        ESP.MaxDistance = math.clamp(num, 50, 2000)
+        slider.Text = tostring(ESP.MaxDistance)
+        distanceSlider.Text = "Max Distance: " .. ESP.MaxDistance
+    else
+        slider.Text = tostring(ESP.MaxDistance)
+    end
+end)
+
 -- Main render loop
 RunService.RenderStepped:Connect(UpdateESP)
 
-print("Rivals ESP activated! Press RIGHT SHIFT to toggle menu")
+print("Rivals ESP activated! Press T to toggle menu")
 [END OUTPUT]
