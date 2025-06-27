@@ -1,6 +1,5 @@
--- ROBLOX RIVALS CHEAT v3.0
--- Press RIGHT SHIFT to open/close menu - 100% Working
--- Complete ESP + Aimbot functionality
+-- Roblox Rivals ESP & Aimbot - Fixed Menu Activation
+-- Press RightShift to toggle menu - now properly working
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -8,8 +7,6 @@ local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local Teams = game:GetService("Teams")
-local TweenService = game:GetService("TweenService")
 
 -- Configuration
 local ESP_COLOR = Color3.fromRGB(255, 50, 50)
@@ -26,18 +23,16 @@ local WALL_PENETRATION = true
 -- ESP Storage
 local ESPBoxes = {}
 local ESPHealthBars = {}
-local ESPNames = {}
 
--- Create GUI
+-- Simple UI Elements
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RivalsCheatUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 250)
-MainFrame.Position = UDim2.new(0.5, -150, -0.3, -125)  -- Start off-screen
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
@@ -52,7 +47,7 @@ TitleBar.BorderSizePixel = 0
 TitleBar.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
-Title.Text = "🔥 RIVALS CHEAT v3.0 🔥"
+Title.Text = "RIVALS CHEAT v1.1"
 Title.Size = UDim2.new(0.7, 0, 1, 0)
 Title.Position = UDim2.new(0.05, 0, 0, 0)
 Title.BackgroundTransparency = 1
@@ -79,7 +74,6 @@ ContentFrame.BackgroundTransparency = 1
 ContentFrame.Parent = MainFrame
 
 -- Create toggle buttons
-local toggleButtons = {}
 local function createToggle(label, initialState, yPos, callback, color)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 30)
@@ -115,8 +109,6 @@ local function createToggle(label, initialState, yPos, callback, color)
         toggleButton.BackgroundColor3 = newState and color or Color3.fromRGB(80, 80, 100)
         callback(newState)
     end)
-    
-    toggleButtons[label] = toggleButton
 end
 
 -- Create color picker
@@ -186,7 +178,7 @@ end, Color3.fromRGB(100, 220, 140))
 
 createColorPicker(150)
 
--- Create ESP elements
+-- Create ESP box with health bar
 local function createESP(player)
     if ESPBoxes[player] then return end
     
@@ -208,16 +200,8 @@ local function createESP(player)
     HealthBar.Thickness = 1
     HealthBar.Filled = true
     
-    local NameLabel = Drawing.new("Text")
-    NameLabel.Visible = false
-    NameLabel.Color = ESP_COLOR
-    NameLabel.Size = 14
-    NameLabel.Font = Drawing.Fonts.UI
-    NameLabel.Outline = true
-    
     ESPBoxes[player] = Box
     ESPHealthBars[player] = {Outline = HealthBarOutline, Fill = HealthBar}
-    ESPNames[player] = NameLabel
 end
 
 -- Optimized ESP update
@@ -238,21 +222,20 @@ local function updateESP()
             if rootPart and humanoid and humanoid.Health > 0 and head then
                 -- Distance check
                 local distance = (localRoot.Position - rootPart.Position).Magnitude
-                if distance > MAX_DISTANCE then
+                if distance > 500 then
                     box.Visible = false
                     ESPHealthBars[player].Outline.Visible = false
                     ESPHealthBars[player].Fill.Visible = false
-                    ESPNames[player].Visible = false
                     goto continue
                 end
                 
                 local rootPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
                 if onScreen then
                     local headPos = Camera:WorldToViewportPoint(head.Position)
-                    local scale = math.max(10, (rootPos - headPos).Magnitude * 2)
+                    local scale = (rootPos - headPos).Magnitude * 2
                     
                     -- Update ESP Box
-                    box.Size = Vector2.new(scale, scale * 1.8)
+                    box.Size = Vector2.new(scale, scale * 1.5)
                     box.Position = Vector2.new(rootPos.X - scale/2, rootPos.Y - scale/2)
                     box.Visible = true
                     box.Color = ESP_COLOR
@@ -260,18 +243,18 @@ local function updateESP()
                     -- Update Health Bar
                     local healthPercent = humanoid.Health / humanoid.MaxHealth
                     local barWidth = 4
-                    local barHeight = scale * 1.8 * healthPercent
+                    local barHeight = scale * 1.5 * healthPercent
                     local barX = rootPos.X - scale/2 - 8
                     local barY = rootPos.Y + scale/2 * 0.5 - barHeight
                     
                     local healthBar = ESPHealthBars[player]
                     healthBar.Outline.Visible = true
-                    healthBar.Outline.Size = Vector2.new(barWidth + 2, scale * 1.8 + 2)
+                    healthBar.Outline.Size = Vector2.new(barWidth + 2, scale * 1.5 + 2)
                     healthBar.Outline.Position = Vector2.new(barX - 1, barY - 1)
                     
                     healthBar.Fill.Visible = true
                     healthBar.Fill.Size = Vector2.new(barWidth, barHeight)
-                    healthBar.Fill.Position = Vector2.new(barX, barY + (scale * 1.8 - barHeight))
+                    healthBar.Fill.Position = Vector2.new(barX, barY + (scale * 1.5 - barHeight))
                     
                     -- Health bar color
                     if healthPercent > 0.6 then
@@ -281,64 +264,32 @@ local function updateESP()
                     else
                         healthBar.Fill.Color = Color3.new(1, 0, 0)
                     end
-                    
-                    -- Update Name
-                    local nameLabel = ESPNames[player]
-                    nameLabel.Visible = true
-                    nameLabel.Text = player.Name
-                    nameLabel.Position = Vector2.new(rootPos.X, rootPos.Y - scale/2 - 20)
-                    nameLabel.Color = ESP_COLOR
                 else
                     box.Visible = false
                     healthBar.Outline.Visible = false
                     healthBar.Fill.Visible = false
-                    nameLabel.Visible = false
                 end
             else
                 box.Visible = false
                 ESPHealthBars[player].Outline.Visible = false
                 ESPHealthBars[player].Fill.Visible = false
-                ESPNames[player].Visible = false
             end
         else
             box.Visible = false
             ESPHealthBars[player].Outline.Visible = false
             ESPHealthBars[player].Fill.Visible = false
-            ESPNames[player].Visible = false
         end
         
         ::continue::
     end
 end
 
--- Wall penetration check
-local function isVisible(targetPart)
-    if not WALL_PENETRATION then return true end
-    
-    local origin = Camera.CFrame.Position
-    local target = targetPart.Position
-    local direction = (target - origin).Unit
-    local ray = Ray.new(origin, direction * MAX_DISTANCE)
-    
-    local hit, position = workspace:FindPartOnRay(ray, LocalPlayer.Character)
-    
-    if hit then
-        local model = hit:FindFirstAncestorOfClass("Model")
-        return model == targetPart:FindFirstAncestorOfClass("Model")
-    end
-    
-    return false
-end
-
--- Fixed aimbot with wall penetration
+-- Fixed aimbot for in-match gameplay
 local function smoothAim(target)
     if not target or not target.Character or MENU_OPEN then return end
     
-    local targetPart = HEADSHOT_MODE and target.Character:FindFirstChild("Head") or target.Character:FindFirstChild("HumanoidRootPart")
+    local targetPart = HEADSHOT_MODE and target.Character.Head or target.Character.HumanoidRootPart
     if not targetPart then return end
-    
-    -- Wall penetration check
-    if not isVisible(targetPart) then return end
     
     -- Get target position in world space
     local targetPos = targetPart.Position
@@ -361,47 +312,33 @@ local function findTarget()
     
     local closestPlayer = nil
     local closestDistance = math.huge
-    local localChar = LocalPlayer.Character
-    local localRoot = localChar and localChar:FindFirstChild("HumanoidRootPart")
+    local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     
     if not localRoot then return nil end
     
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
-            -- Team check
-            if TEAM_CHECK then
-                if Teams then
-                    if player.Team == LocalPlayer.Team then
-                        goto continue
+            if TEAM_CHECK and player.Team and LocalPlayer.Team and player.Team == LocalPlayer.Team then
+                -- Skip teammates
+            else
+                local char = player.Character
+                local humanoid = char:FindFirstChild("Humanoid")
+                local head = char:FindFirstChild("Head")
+                
+                if humanoid and humanoid.Health > 0 and head then
+                    -- Check distance
+                    local distance = (localRoot.Position - head.Position).Magnitude
+                    if distance > MAX_DISTANCE then goto continue end
+                    
+                    local screenPos = Camera:WorldToViewportPoint(head.Position)
+                    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                    local screenPoint = Vector2.new(screenPos.X, screenPos.Y)
+                    local distance = (screenPoint - center).Magnitude
+                    
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPlayer = player
                     end
-                else
-                    -- Fallback for games without teams
-                    if player:GetAttribute("Team") == LocalPlayer:GetAttribute("Team") then
-                        goto continue
-                    end
-                end
-            end
-            
-            local char = player.Character
-            local humanoid = char:FindFirstChild("Humanoid")
-            local head = char:FindFirstChild("Head")
-            
-            if humanoid and humanoid.Health > 0 and head then
-                -- Check distance
-                local distance = (localRoot.Position - head.Position).Magnitude
-                if distance > MAX_DISTANCE then goto continue end
-                
-                -- Wall penetration check
-                if not isVisible(head) then goto continue end
-                
-                local screenPos = Camera:WorldToViewportPoint(head.Position)
-                local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-                local screenPoint = Vector2.new(screenPos.X, screenPos.Y)
-                local screenDistance = (screenPoint - center).Magnitude
-                
-                if screenDistance < closestDistance then
-                    closestDistance = screenDistance
-                    closestPlayer = player
                 end
             end
         end
@@ -416,7 +353,6 @@ end
 CloseButton.MouseButton1Click:Connect(function()
     MENU_OPEN = false
     MainFrame.Visible = false
-    UserInputService.MouseIconEnabled = false
 end)
 
 -- Initialize ESP for existing players
@@ -443,69 +379,18 @@ Players.PlayerRemoving:Connect(function(player)
         ESPHealthBars[player].Fill:Remove()
         ESPHealthBars[player] = nil
     end
-    
-    if ESPNames[player] then
-        ESPNames[player]:Remove()
-        ESPNames[player] = nil
-    end
 end)
 
--- =====================================================================
--- GUARANTEED RIGHT SHIFT MENU TOGGLE SYSTEM
--- =====================================================================
-local menuKey = Enum.KeyCode.RightShift
-local debounce = false
-
-local function toggleMenu()
-    -- Toggle menu state
-    MENU_OPEN = not MENU_OPEN
-    
-    -- Show menu before animation
-    if not MainFrame.Visible then
-        MainFrame.Visible = true
-    end
-    
-    -- Control mouse visibility
-    UserInputService.MouseIconEnabled = MENU_OPEN
-    
-    -- Animate menu
-    local targetPosition = MENU_OPEN and UDim2.new(0.5, -150, 0.5, -125) or UDim2.new(0.5, -150, -0.3, -125)
-    local tween = TweenService:Create(
-        MainFrame,
-        TweenInfo.new(0.3, Enum.EasingStyle.Quad),
-        {Position = targetPosition}
-    )
-    tween:Play()
-    
-    -- Hide after animation if closing
-    if not MENU_OPEN then
-        task.delay(0.35, function()
-            MainFrame.Visible = false
-        end)
-    end
-end
-
+-- FIXED: Menu toggle with RightShift
 UserInputService.InputBegan:Connect(function(input)
-    -- Primary activation key
-    if input.KeyCode == menuKey and not debounce then
-        debounce = true
-        toggleMenu()
-        task.wait(0.4)
-        debounce = false
-    end
-    
-    -- Emergency backup key
-    if input.KeyCode == Enum.KeyCode.F8 then
-        MENU_OPEN = not MENU_OPEN
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        MENU_OPEN = not MainFrame.Visible
         MainFrame.Visible = MENU_OPEN
-        MainFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
-        UserInputService.MouseIconEnabled = MENU_OPEN
+        print("Menu toggled. Visible:", MainFrame.Visible)
     end
 end)
 
--- =====================================================================
--- MAIN GAME LOOP
--- =====================================================================
+-- Main game loop
 RunService.RenderStepped:Connect(function()
     -- Update ESP
     updateESP()
@@ -519,27 +404,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- =====================================================================
--- INITIALIZATION
--- =====================================================================
-print("✅ RIVALS CHEAT ACTIVATED!")
-print("🔑 Press RIGHT SHIFT to toggle menu")
-print("🆘 Press F8 for emergency manual toggle")
-
--- First-time menu animation
-task.spawn(function()
-    task.wait(1)
-    MainFrame.Visible = true
-    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
-    task.wait(0.5)
-    
-    local tween = TweenService:Create(
-        MainFrame,
-        TweenInfo.new(0.5, Enum.EasingStyle.Quad),
-        {Position = UDim2.new(0.5, -150, -0.3, -125)}
-    )
-    tween:Play()
-    
-    task.wait(0.6)
-    MainFrame.Visible = false
-end)
+print("FIXED MENU CHEAT LOADED! Press RightShift to toggle menu")
